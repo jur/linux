@@ -100,11 +100,19 @@ struct smap_chan {
 
 	ps2sif_clientdata_t cd_smap_tx, cd_smap_tx_end;
 	ps2sif_clientdata_t cd_smap_rx, cd_smap_rx_end;
-	u_int32_t dma_result			__attribute__((aligned(16)));
 	void *txdma_ibuf;
 	void *rxdma_ibuf;
-	struct smap_dma_request txdma_request;
-	struct smap_dma_request rxdma_request;
+	u_int32_t dma_result __attribute__((aligned(64)));
+	struct smap_dma_request txdma_request __attribute__((aligned(64)));
+	struct smap_dma_request rxdma_request __attribute__((aligned(64)));
+	/**
+	 * Ensure that the previous attributes will not get dirty cache lines
+	 * by unrelated code.
+	 * We don't know who would get the next address. On multi-threading
+	 * implementations it can make the cache line dirty while a DMA
+	 * transfer is active.
+	 */
+	u_int32_t cachebarrier __attribute__((aligned(64)));
 };
 /* flags */
 #define	SMAP_F_OPENED		(1<<0)
